@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { toast } from "vue-sonner";
 import { cn } from "@/lib/utils";
 
 const props = defineProps({
@@ -14,7 +13,6 @@ const props = defineProps({
 });
 
 const supabase = useSupabaseClient();
-const err_message = ref("");
 
 async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({
@@ -28,10 +26,6 @@ async function signInWithGoogle() {
     console.error("Error signing in with Google:", error.message);
   }
 }
-
-watch(err_message, (err) => {
-  if (err) toast.error(err);
-});
 </script>
 
 <template>

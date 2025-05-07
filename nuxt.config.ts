@@ -11,14 +11,13 @@ export default defineNuxtConfig({
     "@pinia/nuxt",
     "@nuxtjs/color-mode",
     "@nuxtjs/supabase",
-    "@prisma/nuxt",
   ],
 
   supabase: {
     redirectOptions: {
       login: "/login",
       callback: "/confirm", // <--
-      exclude: ["/register"],
+      exclude: ["/register", "/forgot-password"],
     },
   },
 

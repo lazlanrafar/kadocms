@@ -3,8 +3,9 @@ import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import PasswordInput from "~/components/PasswordInput.vue";
+
 import SignInWithGoogleButton from "./sign-in-with-google-button.vue";
-import SignInWithFacebookButton from "./sign-in-with-facebook-button.vue";
+import SignInWithGithubButton from "./sign-in-with-github-button.vue";
 
 const supabase = useSupabaseClient();
 const router = useRouter();
@@ -99,7 +100,7 @@ watch(err_message, (err) => {
     </form>
     <Separator label="Or continue with" />
     <div class="flex items-center gap-4">
-      <SignInWithFacebookButton />
+      <SignInWithGithubButton />
       <SignInWithGoogleButton />
     </div>
   </div>

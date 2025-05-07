@@ -13,7 +13,7 @@ definePageMeta({
           Enter your email below to create your account
         </p>
       </div>
-      <AuthSignUp />
+      <AuthSignUpForm />
       <p class="text-center text-sm text-muted-foreground">
         Already have an account?
         <NuxtLink

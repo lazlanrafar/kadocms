@@ -13,7 +13,7 @@ definePageMeta({
           Login with your Apple or Google account
         </p>
       </div>
-      <AuthSignIn />
+      <AuthSignInForm />
     </div>
   </LayoutAuth>
 </template>
