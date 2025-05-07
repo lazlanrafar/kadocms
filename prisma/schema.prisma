@@ -21,6 +21,45 @@ model tbm_user {
   name           String?
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
+  is_deleted     Boolean  @default(false)
+
+  creator_teams  tbm_team[]        @relation("tbm_team_creator")
+  modifier_teams tbm_team[]        @relation("tbm_team_modifier")
+  teams          tbs_team_member[]
+}
+
+model tbm_team {
+  id     String @id @default(uuid())
+  name   String
+  slug   String @unique
+  status String @default("Active")
+
+  creator_id String
+  creator    tbm_user @relation("tbm_team_creator", fields: [creator_id], references: [id])
+
+  modifier_id String?
+  modifier    tbm_user? @relation("tbm_team_modifier", fields: [modifier_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  is_deleted Boolean  @default(false)
+
+  members tbs_team_member[]
+}
+
+model tbs_team_member {
+  id         String   @id @default(uuid())
+  role       String   @default("Member")
+  status     String   @default("Active")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  is_deleted Boolean  @default(false)
+
+  team_id String
+  team    tbm_team @relation(fields: [team_id], references: [id])
+
+  user_id String
+  user    tbm_user @relation(fields: [user_id], references: [id])
 }
 
 model ObjectType {
