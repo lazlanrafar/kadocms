@@ -57,6 +57,7 @@
     "@tanstack/vue-table": "^8.21.2",
     "@unovis/ts": "^1.5.1",
     "@unovis/vue": "^1.5.1",
+    "cloudinary": "^2.6.1",
     "embla-carousel": "^8.5.2",
     "embla-carousel-vue": "^8.5.2"
   },

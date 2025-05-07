@@ -14,6 +14,16 @@ export default defineNuxtConfig({
     "@prisma/nuxt",
   ],
 
+  runtimeConfig: {
+    cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME, // server only
+    cloudinaryApiKey: process.env.CLOUDINARY_API_KEY, // server only
+    cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET, // server only
+
+    public: {
+      cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME, // exposed if needed client-side
+    },
+  },
+
   supabase: {
     redirectOptions: {
       login: "/login",
