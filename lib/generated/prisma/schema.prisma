@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model ObjectType {
+  id      String  @id @default(uuid())
+  name    String
+  slug    String  @unique
+  entries Entry[]
+
+  fields         FieldDefinition[] @relation("ObjectType")
+  fieldRelations FieldDefinition[] @relation("FieldRelation")
+}
+
+model FieldDefinition {
+  id           String     @id @default(uuid())
+  name         String
+  type         String     @default("text")
+  multiple     Boolean    @default(false)
+  objectType   ObjectType @relation("ObjectType", fields: [objectTypeId], references: [id])
+  objectTypeId String
+
+  relationTo   ObjectType? @relation("FieldRelation", fields: [relationToId], references: [id])
+  relationToId String?
+}
+
+model Entry {
+  id           String     @id @default(uuid())
+  objectType   ObjectType @relation(fields: [objectTypeId], references: [id])
+  objectTypeId String
+  data         Json
+  createdAt    DateTime   @default(now())
+}
