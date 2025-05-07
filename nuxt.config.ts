@@ -11,6 +11,7 @@ export default defineNuxtConfig({
     "@pinia/nuxt",
     "@nuxtjs/color-mode",
     "@nuxtjs/supabase",
+    "@prisma/nuxt",
   ],
 
   supabase: {
@@ -41,6 +42,9 @@ export default defineNuxtConfig({
   routeRules: {
     "/components": { redirect: "/components/accordion" },
     "/settings": { redirect: "/settings/profile" },
+
+    // Cached for 1 hour
+    "/api/*": { cache: { maxAge: 60 * 60 } },
   },
 
   imports: {

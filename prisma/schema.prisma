@@ -3,12 +3,24 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model tbm_user {
+  id             String   @id @default(uuid())
+  avatar         String?
+  email          String   @unique
+  email_verified Boolean  @default(false)
+  user_name      String?
+  full_name      String?
+  name           String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 }
 
 model ObjectType {

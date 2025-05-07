@@ -7,8 +7,12 @@ const user = useSupabaseUser();
 
 watch(
   user,
-  () => {
+  async () => {
     if (user.value) {
+      await $fetch("/api/auth/confirm", {
+        method: "POST",
+      });
+
       return navigateTo("/");
     }
   },
