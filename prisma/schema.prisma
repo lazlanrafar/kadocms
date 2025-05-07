@@ -26,6 +26,9 @@ model tbm_user {
   creator_teams  tbm_team[]        @relation("tbm_team_creator")
   modifier_teams tbm_team[]        @relation("tbm_team_modifier")
   teams          tbs_team_member[]
+
+  creator_media  tbm_media[] @relation("tbm_media_creator")
+  modifier_media tbm_media[] @relation("tbm_media_modifier")
 }
 
 model tbm_team {
@@ -45,6 +48,7 @@ model tbm_team {
   is_deleted Boolean  @default(false)
 
   members tbs_team_member[]
+  images  tbm_media[]
 }
 
 model tbs_team_member {
@@ -60,6 +64,30 @@ model tbs_team_member {
 
   user_id String
   user    tbm_user @relation(fields: [user_id], references: [id])
+}
+
+model tbm_media {
+  id        String  @id @default(uuid())
+  name      String
+  format    String  @default("image")
+  file_size Int?
+  file_path String
+  width     Int?
+  height    Int?
+  alt_text  String?
+
+  creator_id String
+  creator    tbm_user @relation("tbm_media_creator", fields: [creator_id], references: [id])
+
+  modifier_id String?
+  modifier    tbm_user? @relation("tbm_media_modifier", fields: [modifier_id], references: [id])
+
+  team_id String
+  team    tbm_team @relation(fields: [team_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  is_deleted Boolean  @default(false)
 }
 
 model ObjectType {

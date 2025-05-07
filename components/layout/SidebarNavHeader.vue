@@ -69,7 +69,7 @@ onMounted(async () => {
             @click="active_team = team"
           >
             <div
-              class="size-6 flex items-center justify-center border rounded-sm"
+              class="size-6 flex items-center justify-center border rounded-sm bg-sidebar-primary text-sidebar-primary-foreground"
             >
               <Icon
                 name="fluent:animal-cat-16-regular"

@@ -1,31 +1,33 @@
 <script setup lang="ts">
-import type { NavGroup, NavMenu } from '~/types/nav'
-import { navMenu } from '@/constants/menus'
+import type { NavGroup, NavMenu } from "~/types/nav";
+import { navMenu } from "@/constants/menus";
 
-const { metaSymbol } = useShortcuts()
+const { metaSymbol } = useShortcuts();
 
-const openCommand = ref(false)
-const router = useRouter()
+const openCommand = ref(false);
+const router = useRouter();
 
 defineShortcuts({
-  Meta_K: () => openCommand.value = true,
-})
+  Meta_K: () => (openCommand.value = true),
+});
 
 const componentsNav = computed<NavGroup | undefined>(() => {
-  return navMenu
-    .flatMap((nav: NavMenu) => nav.items)
-    // @ts-expect-error - We know that the title is unique
-    .find((item: NavGroup) => item.title === 'Components')
-})
+  return (
+    navMenu
+      .flatMap((nav: NavMenu) => nav.items)
+      // @ts-expect-error - We know that the title is unique
+      .find((item: NavGroup) => item.title === "Components")
+  );
+});
 
 function handleSelectLink(link: string) {
-  router.push(link)
-  openCommand.value = false
+  router.push(link);
+  openCommand.value = false;
 }
 </script>
 
 <template>
-  <SidebarMenuButton as-child tooltip="Search">
+  <!-- <SidebarMenuButton as-child tooltip="Search">
     <Button variant="outline" size="sm" class="text-xs" @click="openCommand = !openCommand">
       <Icon name="i-lucide-search" />
       <span class="font-normal group-data-[collapsible=icon]:hidden">Search documentation</span>
@@ -34,7 +36,7 @@ function handleSelectLink(link: string) {
         <BaseKbd>K</BaseKbd>
       </div>
     </Button>
-  </SidebarMenuButton>
+  </SidebarMenuButton> -->
 
   <CommandDialog v-model:open="openCommand">
     <CommandInput placeholder="Type a command or search..." />
@@ -73,6 +75,4 @@ function handleSelectLink(link: string) {
   </CommandDialog>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>
