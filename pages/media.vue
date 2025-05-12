@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { toast } from "vue-sonner";
 import { Loader2 } from "lucide-vue-next";
 import type { tbm_media } from "@prisma/client";
-import { NuxtImg } from "#components";
 import moment from "moment";
 
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -42,12 +41,12 @@ const handleFileChange = async (event: Event) => {
     );
 
     console.log("Upload success:", result);
-    // Optional: update media list here
+    await fetchMedia(); // Refresh after upload
   } catch (err) {
     console.error("Upload error:", err);
   } finally {
     loading.value = false;
-    target.value = ""; // reset input so same file can be selected again
+    target.value = ""; // reset input
   }
 };
 
@@ -60,17 +59,64 @@ const formatSize = (size: number) => {
 };
 
 const data = ref<tbm_media[]>([]);
-const dataActive = ref<tbm_media>();
+const dataActive = ref<tbm_media | null>(null);
 
-onMounted(async () => {
-  const response = await $fetch("/api/media");
+// 🔍 Search
+const search = ref("");
 
-  if (response) {
-    (data as any).value = response.data;
-    (dataActive as any).value = response.data[0];
-  } else {
-    err_message.value = "Failed to fetch media";
+// 📦 Pagination
+const pagination = ref({
+  total: 0,
+  page: 1,
+  limit: 5,
+  lastPage: 1,
+});
+
+// 📡 Fetch data from API
+const fetchMedia = async () => {
+  try {
+    const response = await $fetch("/api/media", {
+      params: {
+        page: pagination.value.page,
+        limit: pagination.value.limit,
+        search: search.value || undefined,
+      },
+    });
+
+    if (response) {
+      (data as any).value = response.data;
+      (dataActive as any).value = response.data[0] || null;
+
+      pagination.value = {
+        total: response.pagination.total,
+        page: response.pagination.page,
+        limit: response.pagination.limit,
+        lastPage: response.pagination.lastPage,
+      };
+    } else {
+      err_message.value = "Failed to fetch media";
+    }
+  } catch (err) {
+    console.error("Fetch media error:", err);
+    err_message.value = "Something went wrong while fetching media.";
   }
+};
+
+onMounted(() => {
+  fetchMedia();
+});
+
+watch(
+  () => pagination.value.page,
+  () => {
+    fetchMedia();
+  }
+);
+
+// 🔄 Watch search and reset page
+watch(search, () => {
+  pagination.value.page = 1;
+  fetchMedia();
 });
 </script>
 
@@ -104,9 +150,60 @@ onMounted(async () => {
     </div>
 
     <!-- Grid Layout -->
-    <div class="grid grid-cols-12 gap-4">
+    <div class="grid grid-cols-12 gap-4 border-t pt-5">
       <!-- Media Table -->
       <div class="col-span-12 lg:col-span-8">
+        <div class="flex justify-between mb-5">
+          <div class="flex items-center gap-2">
+            <Input
+              v-model="search"
+              type="text"
+              placeholder="Search media..."
+              class="w-full max-w-[400px] outline-none"
+            />
+          </div>
+
+          <Pagination
+            v-slot="{ page }"
+            :items-per-page="pagination.limit"
+            :total="pagination.total"
+            :sibling-count="1"
+            :page="pagination.page"
+            show-edges
+            :default-page="pagination.page"
+            @update:page="
+              (p) => {
+                pagination.page = p;
+              }
+            "
+          >
+            <PaginationList v-slot="{ items }" class="flex items-center gap-1">
+              <!-- <PaginationFirst /> -->
+              <PaginationPrev />
+
+              <template v-for="(item, index) in items">
+                <PaginationListItem
+                  v-if="item.type === 'page'"
+                  :key="index"
+                  :value="item.value"
+                  as-child
+                >
+                  <Button
+                    class="w-9 h-9 p-0"
+                    :variant="item.value === page ? 'default' : 'outline'"
+                  >
+                    {{ item.value }}
+                  </Button>
+                </PaginationListItem>
+                <PaginationEllipsis v-else :key="item.type" :index="index" />
+              </template>
+
+              <PaginationNext />
+              <!-- <PaginationLast /> -->
+            </PaginationList>
+          </Pagination>
+        </div>
+
         <div class="max-h-[70vh] overflow-y-auto">
           <Table>
             <TableHeader>
@@ -118,12 +215,30 @@ onMounted(async () => {
               </TableRow>
             </TableHeader>
             <TableBody>
+              <!-- Loading State -->
+              <TableRow v-if="loading">
+                <TableCell colspan="4" class="text-center py-10">
+                  <Loader2 class="h-5 w-5 animate-spin inline-block mr-2" />
+                  Loading media...
+                </TableCell>
+              </TableRow>
+
+              <!-- Empty State -->
+              <TableRow v-else-if="data.length === 0">
+                <TableCell
+                  colspan="4"
+                  class="text-center py-10 text-muted-foreground"
+                >
+                  No media found.
+                </TableCell>
+              </TableRow>
+
+              <!-- Media Rows -->
               <TableRow
+                v-else
                 v-for="(media, index) in data"
                 :key="media.id"
-                :class="{
-                  'bg-muted/50': dataActive?.id === media.id,
-                }"
+                :class="{ 'bg-muted/50': dataActive?.id === media.id }"
                 class="cursor-pointer hover:bg-muted/50"
                 @click="dataActive = media"
               >

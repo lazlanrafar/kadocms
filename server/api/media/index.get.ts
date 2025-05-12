@@ -8,6 +8,7 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event);
     const page = parseInt(query.page as string) || 1;
     const limit = parseInt(query.limit as string) || 10;
+    const search = (query.search as string) || "";
 
     const skip = (page - 1) * limit;
 
@@ -16,6 +17,11 @@ export default defineEventHandler(async (event) => {
       where: {
         is_deleted: false,
         team_id: activeTeamId,
+
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { format: { contains: search, mode: "insensitive" } },
+        ],
       },
     });
 
@@ -24,6 +30,11 @@ export default defineEventHandler(async (event) => {
       where: {
         is_deleted: false,
         team_id: activeTeamId,
+
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { format: { contains: search, mode: "insensitive" } },
+        ],
       },
       skip,
       take: limit,
