@@ -2,11 +2,13 @@ import { serverSupabaseUser } from "#supabase/server";
 import prisma from "~/lib/prisma";
 
 export default defineEventHandler(async (event) => {
-  const supabaseUser = await serverSupabaseUser(event);
-
-  if (!supabaseUser) {
-    throw createError({ statusCode: 401, message: "Unauthorized" });
+  if (!event.path.startsWith("/api")) {
+    return;
   }
+
+  const supabaseUser = await serverSupabaseUser(event);
+  if (!supabaseUser)
+    throw createError({ statusCode: 401, message: "Unauthorized" });
 
   const user = await prisma.tbm_user.findFirst({
     where: { email: supabaseUser.email },
@@ -14,11 +16,7 @@ export default defineEventHandler(async (event) => {
       teams: true,
     },
   });
-  if (!user) {
-    throw createError({ statusCode: 401, message: "Unauthorized" });
-  }
-
-  console.log("supabaseUser", supabaseUser.email);
+  if (!user) throw createError({ statusCode: 401, message: "Unauthorized" });
 
   event.context.auth = {
     id: user.id,
