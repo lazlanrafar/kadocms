@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -47,10 +47,10 @@ model tbm_team {
   is_deleted Boolean  @default(false)
 
   // Stripe subscription info
-  stripe_customer_id    String?
+  stripe_customer_id     String?
   stripe_subscription_id String?
-  subscription_status   String? @default("free")
-  plan_type            String? @default("free")
+  subscription_status    String? @default("free")
+  plan_type              String? @default("free")
 
   // Creator / Modifier
   creator_id String
@@ -175,7 +175,7 @@ model tbm_entry {
 
 // Entry Log - Track API usage per user
 model tbs_entry_log {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   entry_id   String
   entry      tbm_entry @relation(fields: [entry_id], references: [id])
   user_id    String
