@@ -88,10 +88,7 @@ export default function LoginPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col items-center gap-2">
-          <a
-            href="#"
-            className="flex flex-col items-center gap-2 font-medium"
-          >
+          <a href="#" className="flex flex-col items-center gap-2 font-medium">
             <div className="flex size-8 items-center justify-center rounded-md">
               <GalleryVerticalEnd className="size-6" />
             </div>
@@ -126,9 +123,9 @@ export default function LoginPage() {
                   required
                 />
               </div>
-              <Button 
-                type="submit" 
-                className="w-full mt-4" 
+              <Button
+                type="submit"
+                className="w-full mt-4"
                 disabled={isLoading || !email}
               >
                 {isLoading ? (
@@ -162,9 +159,9 @@ export default function LoginPage() {
                 </p>
               </div>
               <div className="flex gap-2 mt-4">
-                <Button 
-                  type="submit" 
-                  className="flex-1" 
+                <Button
+                  type="submit"
+                  className="flex-1"
                   disabled={isLoading || otp.length !== 6}
                 >
                   {isLoading ? (
@@ -176,9 +173,9 @@ export default function LoginPage() {
                     "Verify Code"
                   )}
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={resetForm}
                   disabled={isLoading}
                 >
