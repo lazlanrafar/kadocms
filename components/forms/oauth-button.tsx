@@ -2,7 +2,7 @@
 
 import { Button } from "../atoms/button";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase-client";
+import { createClient } from "@/utils/supabase/client";
 
 interface OAuthButtonProps {
   provider: "google" | "github";

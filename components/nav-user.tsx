@@ -25,7 +25,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/atoms/sidebar";
-import { createClient } from "@/lib/supabase-client";
+import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
 export function NavUser({

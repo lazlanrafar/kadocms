@@ -7,7 +7,7 @@ import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
 import OAuthButton from "@/components/forms/oauth-button";
 import { GalleryVerticalEnd, Mail } from "lucide-react";
-import { createClient } from "@/lib/supabase-client";
+import { createClient } from "@/utils/supabase/client";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");

@@ -1,4 +1,4 @@
-import { createClient } from "./supabase-server";
+import { createClient } from "@/utils/supabase/server";
 import { prisma } from "./prisma";
 
 export async function getCurrentUser() {
