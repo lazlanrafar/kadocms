@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
@@ -9,16 +9,15 @@ import OAuthButton from "@/components/forms/oauth-button";
 import { GalleryVerticalEnd, Mail } from "lucide-react";
 import { supabase } from "@/lib/supabase-client";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
@@ -74,16 +73,6 @@ export default function LoginPage() {
     setError("");
   };
 
-  // Check for error in URL params
-  const urlError = searchParams.get("error");
-  if (urlError && !error) {
-    if (urlError === "auth_error") {
-      setError("Authentication failed. Please try again.");
-    } else if (urlError === "unexpected_error") {
-      setError("An unexpected error occurred. Please try again.");
-    }
-  }
-
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-6">
@@ -97,11 +86,11 @@ export default function LoginPage() {
             </div>
             <span className="sr-only">KadoCMS</span>
           </a>
-          <h1 className="text-xl font-bold">Welcome to KadoCMS</h1>
+          <h1 className="text-xl font-bold">Create your account</h1>
           <div className="text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <a href="/signup" className="underline underline-offset-4">
-              Sign up
+            Already have an account?{" "}
+            <a href="/login" className="underline underline-offset-4">
+              Sign in
             </a>
           </div>
         </div>
@@ -114,7 +103,7 @@ export default function LoginPage() {
 
         <div className="flex flex-col gap-6">
           {!isOtpSent ? (
-            <form onSubmit={handleEmailLogin}>
+            <form onSubmit={handleEmailSignup}>
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -173,7 +162,7 @@ export default function LoginPage() {
                       Verifying...
                     </>
                   ) : (
-                    "Verify Code"
+                    "Verify & Create Account"
                   )}
                 </Button>
                 <Button 

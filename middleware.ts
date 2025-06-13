@@ -10,7 +10,12 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // Protect admin routes
+  // Allow callback route to process authentication
+  if (req.nextUrl.pathname.startsWith("/callback")) {
+    return res;
+  }
+
+  // Protect dashboard routes
   if (req.nextUrl.pathname.startsWith("/dashboard")) {
     if (!session) {
       return NextResponse.redirect(new URL("/login", req.url));
@@ -30,10 +35,15 @@ export async function middleware(req: NextRequest) {
   return res;
 }
 
-// export const config = {
-//   matcher: ["/dashboard/:path*", "/login", "/signup"],
-// };
-
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/signup", "/callback"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 };
