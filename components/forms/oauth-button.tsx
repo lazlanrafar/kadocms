@@ -2,7 +2,7 @@
 
 import { Button } from "../atoms/button";
 import { useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase-client";
 
 interface OAuthButtonProps {
   provider: "google" | "github";
@@ -38,19 +38,25 @@ const Icons = {
 
 export default function OAuthButton({ provider, label }: OAuthButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   const onLogin = async () => {
     setIsLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/callback`,
-      },
-    });
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/callback`,
+        },
+      });
 
-    if (error) {
-      console.error(`OAuth error with ${provider}:`, error.message);
+      if (error) {
+        console.error(`${provider} OAuth error:`, error);
+        setIsLoading(false);
+      }
+      // Don't set loading to false on success as the page will redirect
+    } catch (error) {
+      console.error(`Unexpected ${provider} OAuth error:`, error);
       setIsLoading(false);
     }
   };

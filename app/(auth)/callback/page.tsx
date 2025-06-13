@@ -2,14 +2,15 @@
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase-client";
+import { createClient } from "@/lib/supabase-client";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const supabase = createClient();
 
   useEffect(() => {
-    const handleOAuthCallback = async () => {
+    const handleAuthCallback = async () => {
       try {
         // Handle OAuth errors in query string
         const errorParam = searchParams.get("error");
@@ -19,37 +20,39 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        // Try to get session
+        // Handle OAuth callback
         const { data, error } = await supabase.auth.getSession();
 
         if (error) {
-          console.error("OAuth session error:", error);
-          router.replace("/login?error=session_error");
+          console.error("Auth callback error:", error);
+          router.replace("/login?error=auth_error");
           return;
         }
 
         if (data.session) {
-          // Session exists — redirect to dashboard
+          // Successfully authenticated - redirect to dashboard
+          console.log("Authentication successful, redirecting to dashboard");
           router.replace("/dashboard");
         } else {
-          // Retry after short delay (to account for session propagation)
-          setTimeout(async () => {
-            const { data: retryData } = await supabase.auth.getSession();
-            if (retryData.session) {
-              router.replace("/dashboard");
-            } else {
-              router.replace("/login?error=no_session");
-            }
-          }, 500);
+          // No session found - try to refresh
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          
+          if (refreshError || !refreshData.session) {
+            console.log("No session found, redirecting to login");
+            router.replace("/login");
+          } else {
+            console.log("Session refreshed, redirecting to dashboard");
+            router.replace("/dashboard");
+          }
         }
-      } catch (err) {
-        console.error("Unexpected error during auth callback:", err);
-        router.replace("/login?error=unexpected");
+      } catch (error) {
+        console.error("Unexpected error during auth callback:", error);
+        router.replace("/login?error=unexpected_error");
       }
     };
 
-    handleOAuthCallback();
-  }, [router, searchParams]);
+    handleAuthCallback();
+  }, [router, searchParams, supabase.auth]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">

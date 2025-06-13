@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
@@ -9,17 +9,16 @@ import OAuthButton from "@/components/forms/oauth-button";
 import { GalleryVerticalEnd, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase-client";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
-  const searchParams = useSearchParams();
   const supabase = createClient();
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
@@ -59,7 +58,7 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else if (data.session) {
-        console.log("OTP verification successful, redirecting to dashboard");
+        console.log("Signup successful, redirecting to dashboard");
         router.push("/dashboard");
       }
     } catch (error) {
@@ -76,31 +75,24 @@ export default function LoginPage() {
     setError("");
   };
 
-  // Check for error in URL params
-  const urlError = searchParams.get("error");
-  if (urlError && !error) {
-    if (urlError === "auth_error") {
-      setError("Authentication failed. Please try again.");
-    } else if (urlError === "unexpected_error") {
-      setError("An unexpected error occurred. Please try again.");
-    }
-  }
-
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col items-center gap-2">
-          <a href="#" className="flex flex-col items-center gap-2 font-medium">
+          <a
+            href="#"
+            className="flex flex-col items-center gap-2 font-medium"
+          >
             <div className="flex size-8 items-center justify-center rounded-md">
               <GalleryVerticalEnd className="size-6" />
             </div>
             <span className="sr-only">KadoCMS</span>
           </a>
-          <h1 className="text-xl font-bold">Welcome to KadoCMS</h1>
+          <h1 className="text-xl font-bold">Create your account</h1>
           <div className="text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <a href="/signup" className="underline underline-offset-4">
-              Sign up
+            Already have an account?{" "}
+            <a href="/login" className="underline underline-offset-4">
+              Sign in
             </a>
           </div>
         </div>
@@ -113,7 +105,7 @@ export default function LoginPage() {
 
         <div className="flex flex-col gap-6">
           {!isOtpSent ? (
-            <form onSubmit={handleEmailLogin}>
+            <form onSubmit={handleEmailSignup}>
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -125,9 +117,9 @@ export default function LoginPage() {
                   required
                 />
               </div>
-              <Button
-                type="submit"
-                className="w-full mt-4"
+              <Button 
+                type="submit" 
+                className="w-full mt-4" 
                 disabled={isLoading || !email}
               >
                 {isLoading ? (
@@ -161,9 +153,9 @@ export default function LoginPage() {
                 </p>
               </div>
               <div className="flex gap-2 mt-4">
-                <Button
-                  type="submit"
-                  className="flex-1"
+                <Button 
+                  type="submit" 
+                  className="flex-1" 
                   disabled={isLoading || otp.length !== 6}
                 >
                   {isLoading ? (
@@ -172,12 +164,12 @@ export default function LoginPage() {
                       Verifying...
                     </>
                   ) : (
-                    "Verify Code"
+                    "Verify & Create Account"
                   )}
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
+                <Button 
+                  type="button" 
+                  variant="outline" 
                   onClick={resetForm}
                   disabled={isLoading}
                 >

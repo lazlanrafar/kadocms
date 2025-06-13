@@ -1,7 +1,9 @@
-import { supabase } from "./supabase-client";
+import { createClient } from "./supabase-server";
 import { prisma } from "./prisma";
 
 export async function getCurrentUser() {
+  const supabase = await createClient();
+  
   const {
     data: { user },
   } = await supabase.auth.getUser();

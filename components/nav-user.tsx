@@ -25,7 +25,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/atoms/sidebar";
-import { supabase } from "@/lib/supabase-client";
+import { createClient } from "@/lib/supabase-client";
+import { useRouter } from "next/navigation";
 
 export function NavUser({
   user,
@@ -37,9 +38,12 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const supabase = createClient();
+  const router = useRouter();
 
   const logout = async () => {
     await supabase.auth.signOut();
+    router.push("/login");
   };
 
   return (
