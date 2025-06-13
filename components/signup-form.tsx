@@ -9,25 +9,31 @@ import { Button } from "@/components/atoms/button"
 import { Input } from "@/components/atoms/input"
 import { Label } from "@/components/atoms/label"
 
-export function LoginForm({
+export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [fullName, setFullName] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: fullName,
+          }
+        }
       })
 
       if (error) throw error
@@ -42,7 +48,7 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <form onSubmit={handleLogin}>
+      <form onSubmit={handleSignup}>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center gap-2">
             <a
@@ -54,11 +60,11 @@ export function LoginForm({
               </div>
               <span className="sr-only">KadoCMS</span>
             </a>
-            <h1 className="text-xl font-bold">Welcome back</h1>
+            <h1 className="text-xl font-bold">Create your account</h1>
             <div className="text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <a href="/signup" className="underline underline-offset-4">
-                Sign up
+              Already have an account?{" "}
+              <a href="/login" className="underline underline-offset-4">
+                Sign in
               </a>
             </div>
           </div>
@@ -70,6 +76,17 @@ export function LoginForm({
           )}
 
           <div className="flex flex-col gap-6">
+            <div className="grid gap-3">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                type="text"
+                placeholder="John Doe"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
+            </div>
             <div className="grid gap-3">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -90,10 +107,11 @@ export function LoginForm({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Creating account..." : "Create Account"}
             </Button>
           </div>
           <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
