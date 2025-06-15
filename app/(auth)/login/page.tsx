@@ -59,8 +59,8 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else if (data.session) {
-        console.log("OTP verification successful, redirecting to dashboard");
-        router.push("/dashboard");
+        console.log("OTP verification successful, redirecting to workspace selection");
+        router.push("/workspace-select");
       }
     } catch (error) {
       setError("An unexpected error occurred");

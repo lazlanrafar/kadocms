@@ -23,11 +23,11 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed':
         const session = event.data.object
-        const teamId = session.metadata?.teamId
+        const workspaceId = session.metadata?.workspaceId
 
-        if (teamId && session.subscription) {
-          await prisma.tbm_team.update({
-            where: { id: teamId },
+        if (workspaceId && session.subscription) {
+          await prisma.tbm_workspace.update({
+            where: { id: workspaceId },
             data: {
               stripe_subscription_id: session.subscription as string,
               subscription_status: 'active',
@@ -44,13 +44,13 @@ export async function POST(req: NextRequest) {
             invoice.subscription as string
           )
           
-          const team = await prisma.tbm_team.findFirst({
+          const workspace = await prisma.tbm_workspace.findFirst({
             where: { stripe_subscription_id: subscription.id }
           })
 
-          if (team) {
-            await prisma.tbm_team.update({
-              where: { id: team.id },
+          if (workspace) {
+            await prisma.tbm_workspace.update({
+              where: { id: workspace.id },
               data: { subscription_status: 'active' }
             })
           }
@@ -60,13 +60,13 @@ export async function POST(req: NextRequest) {
       case 'invoice.payment_failed':
         const failedInvoice = event.data.object
         if (failedInvoice.subscription) {
-          const team = await prisma.tbm_team.findFirst({
+          const workspace = await prisma.tbm_workspace.findFirst({
             where: { stripe_subscription_id: failedInvoice.subscription as string }
           })
 
-          if (team) {
-            await prisma.tbm_team.update({
-              where: { id: team.id },
+          if (workspace) {
+            await prisma.tbm_workspace.update({
+              where: { id: workspace.id },
               data: { subscription_status: 'past_due' }
             })
           }
@@ -75,13 +75,13 @@ export async function POST(req: NextRequest) {
 
       case 'customer.subscription.deleted':
         const deletedSubscription = event.data.object
-        const teamToUpdate = await prisma.tbm_team.findFirst({
+        const workspaceToUpdate = await prisma.tbm_workspace.findFirst({
           where: { stripe_subscription_id: deletedSubscription.id }
         })
 
-        if (teamToUpdate) {
-          await prisma.tbm_team.update({
-            where: { id: teamToUpdate.id },
+        if (workspaceToUpdate) {
+          await prisma.tbm_workspace.update({
+            where: { id: workspaceToUpdate.id },
             data: {
               subscription_status: 'canceled',
               plan_type: 'free'

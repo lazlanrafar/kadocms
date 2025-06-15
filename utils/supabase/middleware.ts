@@ -38,13 +38,23 @@ export async function updateSession(request: NextRequest) {
   // Allow callback and auth routes to process
   if (
     request.nextUrl.pathname.startsWith('/callback') ||
-    request.nextUrl.pathname.startsWith('/auth')
+    request.nextUrl.pathname.startsWith('/auth') ||
+    request.nextUrl.pathname.startsWith('/api')
   ) {
     return supabaseResponse
   }
 
   // Protect dashboard routes
   if (request.nextUrl.pathname.startsWith('/dashboard')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // Protect workspace selection
+  if (request.nextUrl.pathname.startsWith('/workspace-select')) {
     if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
@@ -59,7 +69,7 @@ export async function updateSession(request: NextRequest) {
   ) {
     if (user) {
       const url = request.nextUrl.clone()
-      url.pathname = '/dashboard'
+      url.pathname = '/workspace-select'
       return NextResponse.redirect(url)
     }
   }

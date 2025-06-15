@@ -1,4 +1,5 @@
 import Stripe from 'stripe'
+import { prisma } from './prisma'
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20'
@@ -25,16 +26,16 @@ export const PLANS = {
   }
 }
 
-export async function createStripeCustomer(email: string, teamId: string) {
+export async function createStripeCustomer(email: string, workspaceId: string) {
   const customer = await stripe.customers.create({
     email,
     metadata: {
-      teamId
+      workspaceId
     }
   })
 
-  await prisma.tbm_team.update({
-    where: { id: teamId },
+  await prisma.tbm_workspace.update({
+    where: { id: workspaceId },
     data: { stripe_customer_id: customer.id }
   })
 
@@ -44,7 +45,7 @@ export async function createStripeCustomer(email: string, teamId: string) {
 export async function createCheckoutSession(
   customerId: string,
   priceId: string,
-  teamId: string
+  workspaceId: string
 ) {
   return await stripe.checkout.sessions.create({
     customer: customerId,
@@ -56,10 +57,10 @@ export async function createCheckoutSession(
       }
     ],
     mode: 'subscription',
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/admin/billing?success=true`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/admin/billing?canceled=true`,
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/billing?success=true`,
+    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/billing?canceled=true`,
     metadata: {
-      teamId
+      workspaceId
     }
   })
 }
