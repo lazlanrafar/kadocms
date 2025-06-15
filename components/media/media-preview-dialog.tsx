@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
@@ -19,7 +19,8 @@ import {
   Calendar,
   FileText,
   Image as ImageIcon,
-  Save
+  Save,
+  CheckCircle
 } from "lucide-react";
 import { Separator } from "@/components/atoms/separator";
 
@@ -55,6 +56,15 @@ export function MediaPreviewDialog({
   const [altText, setAltText] = useState(file.alt_text || "");
   const [description, setDescription] = useState(file.description || "");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  // Reset form when file changes
+  useEffect(() => {
+    setAltText(file.alt_text || "");
+    setDescription(file.description || "");
+    setUpdateSuccess(false);
+  }, [file.id, file.alt_text, file.description]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
@@ -74,9 +84,14 @@ export function MediaPreviewDialog({
     });
   };
 
-  const handleCopyUrl = () => {
-    navigator.clipboard.writeText(file.file_path);
-    // You could add a toast notification here
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(file.file_path);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy URL:', error);
+    }
   };
 
   const handleDownload = () => {
@@ -104,6 +119,10 @@ export function MediaPreviewDialog({
 
       if (!response.ok) throw new Error('Failed to update file');
 
+      setUpdateSuccess(true);
+      setTimeout(() => setUpdateSuccess(false), 3000);
+      
+      // Auto-refetch media files after update
       onUpdate();
     } catch (error) {
       console.error('Error updating file:', error);
@@ -132,6 +151,14 @@ export function MediaPreviewDialog({
         </SheetHeader>
 
         <div className="space-y-6 mt-6">
+          {/* Success Messages */}
+          {updateSuccess && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md flex items-center gap-2">
+              <CheckCircle className="h-5 w-5" />
+              File updated successfully!
+            </div>
+          )}
+
           {/* Preview */}
           <div className="bg-muted rounded-lg p-4">
             {file.media_type.startsWith('image/') ? (
@@ -153,9 +180,23 @@ export function MediaPreviewDialog({
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleCopyUrl}>
-              <Copy className="h-4 w-4 mr-2" />
-              Copy URL
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleCopyUrl}
+              className={copySuccess ? "bg-green-50 border-green-200 text-green-700" : ""}
+            >
+              {copySuccess ? (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy URL
+                </>
+              )}
             </Button>
             <Button variant="outline" size="sm" onClick={handleDownload}>
               <Download className="h-4 w-4 mr-2" />

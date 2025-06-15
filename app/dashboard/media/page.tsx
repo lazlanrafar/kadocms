@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
 import { Card, CardContent } from "@/components/atoms/card";
@@ -15,7 +15,8 @@ import {
   Trash2,
   Eye,
   Copy,
-  Settings
+  Settings,
+  CheckCircle
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -27,6 +28,7 @@ import {
 import { MediaUploadDialog } from "@/components/media/media-upload-dialog";
 import { MediaPreviewDialog } from "@/components/media/media-preview-dialog";
 import { MediaSettingsDialog } from "@/components/media/media-settings-dialog";
+import { DeleteConfirmationDialog } from "@/components/media/delete-confirmation-dialog";
 
 interface MediaFile {
   id: string;
@@ -51,15 +53,15 @@ export default function MediaPage() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<MediaFile | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalFiles, setTotalFiles] = useState(0);
+  const [copySuccess, setCopySuccess] = useState<string | null>(null);
   const filesPerPage = 20;
 
-  useEffect(() => {
-    fetchMediaFiles();
-  }, [currentPage, searchQuery]);
-
-  const fetchMediaFiles = async () => {
+  const fetchMediaFiles = useCallback(async () => {
     try {
       setIsLoading(true);
       const workspaceId = localStorage.getItem("selectedWorkspace");
@@ -81,31 +83,62 @@ export default function MediaPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, searchQuery]);
 
-  const handleFileUpload = () => {
+  useEffect(() => {
+    fetchMediaFiles();
+  }, [fetchMediaFiles]);
+
+  const handleFileUpload = useCallback(() => {
+    // Auto-refetch media files after upload
     fetchMediaFiles();
     setIsUploadOpen(false);
+  }, [fetchMediaFiles]);
+
+  const handleFileUpdate = useCallback(() => {
+    // Auto-refetch media files after update
+    fetchMediaFiles();
+  }, [fetchMediaFiles]);
+
+  const handleDeleteClick = (file: MediaFile) => {
+    setFileToDelete(file);
+    setIsDeleteDialogOpen(true);
   };
 
-  const handleFileDelete = async (fileId: string) => {
+  const handleDeleteConfirm = async () => {
+    if (!fileToDelete) return;
+
     try {
-      const response = await fetch(`/api/media/${fileId}`, {
+      setIsDeleting(true);
+      const response = await fetch(`/api/media/${fileToDelete.id}`, {
         method: "DELETE",
       });
 
       if (!response.ok) throw new Error("Failed to delete file");
 
-      setMediaFiles(files => files.filter(f => f.id !== fileId));
+      // Auto-refetch media files after deletion
+      await fetchMediaFiles();
+      
+      // Close dialogs and reset state
+      setIsDeleteDialogOpen(false);
+      setFileToDelete(null);
       setSelectedFile(null);
+      setIsPreviewOpen(false);
     } catch (error) {
       console.error("Error deleting file:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  const handleCopyUrl = (url: string) => {
-    navigator.clipboard.writeText(url);
-    // You could add a toast notification here
+  const handleCopyUrl = async (url: string, fileName: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopySuccess(fileName);
+      setTimeout(() => setCopySuccess(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy URL:', error);
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -243,9 +276,18 @@ export default function MediaPage() {
                           <Eye className="h-4 w-4 mr-2" />
                           Preview
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleCopyUrl(file.file_path)}>
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copy URL
+                        <DropdownMenuItem onClick={() => handleCopyUrl(file.file_path, file.name)}>
+                          {copySuccess === file.name ? (
+                            <>
+                              <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-4 w-4 mr-2" />
+                              Copy URL
+                            </>
+                          )}
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <Download className="h-4 w-4 mr-2" />
@@ -253,7 +295,7 @@ export default function MediaPage() {
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onClick={() => handleFileDelete(file.id)}
+                          onClick={() => handleDeleteClick(file)}
                           className="text-red-600"
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
@@ -344,9 +386,18 @@ export default function MediaPage() {
                       <Eye className="h-4 w-4 mr-2" />
                       Preview
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleCopyUrl(file.file_path)}>
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copy URL
+                    <DropdownMenuItem onClick={() => handleCopyUrl(file.file_path, file.name)}>
+                      {copySuccess === file.name ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy URL
+                        </>
+                      )}
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <Download className="h-4 w-4 mr-2" />
@@ -354,7 +405,7 @@ export default function MediaPage() {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => handleFileDelete(file.id)}
+                      onClick={() => handleDeleteClick(file)}
                       className="text-red-600"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
@@ -410,14 +461,22 @@ export default function MediaPage() {
           open={isPreviewOpen}
           onOpenChange={setIsPreviewOpen}
           file={selectedFile}
-          onDelete={() => handleFileDelete(selectedFile.id)}
-          onUpdate={fetchMediaFiles}
+          onDelete={() => handleDeleteClick(selectedFile)}
+          onUpdate={handleFileUpdate}
         />
       )}
 
       <MediaSettingsDialog
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
+      />
+
+      <DeleteConfirmationDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        fileName={fileToDelete?.name || ""}
+        isDeleting={isDeleting}
       />
     </div>
   );

@@ -12,7 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/atoms/sheet";
-import { Upload, X, File, Image } from "lucide-react";
+import { Upload, X, File, Image, CheckCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/atoms/card";
 
 interface MediaUploadDialogProps {
@@ -130,12 +130,12 @@ export function MediaUploadDialog({
 
     setIsUploading(false);
     
-    // Check if all files uploaded successfully
-    const allUploaded = files.every(f => f.uploaded);
-    if (allUploaded) {
+    // Auto-refetch media files after all uploads complete
+    setTimeout(() => {
       onUploadComplete();
       setFiles([]);
-    }
+      onOpenChange(false);
+    }, 1000);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -145,6 +145,8 @@ export function MediaUploadDialog({
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
+
+  const allUploaded = files.length > 0 && files.every(f => f.uploaded);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -157,6 +159,14 @@ export function MediaUploadDialog({
         </SheetHeader>
 
         <div className="space-y-6 mt-6">
+          {/* Success Message */}
+          {allUploaded && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md flex items-center gap-2">
+              <CheckCircle className="h-5 w-5" />
+              All files uploaded successfully! Refreshing media library...
+            </div>
+          )}
+
           {/* Dropzone */}
           <div
             {...getRootProps()}
@@ -228,6 +238,7 @@ export function MediaUploadDialog({
                                   value={uploadFile.altText}
                                   onChange={(e) => updateFileMetadata(index, 'altText', e.target.value)}
                                   className="h-8"
+                                  disabled={uploadFile.uploading || uploadFile.uploaded}
                                 />
                               </div>
                             </div>
@@ -243,6 +254,7 @@ export function MediaUploadDialog({
                               value={uploadFile.description}
                               onChange={(e) => updateFileMetadata(index, 'description', e.target.value)}
                               className="h-8"
+                              disabled={uploadFile.uploading || uploadFile.uploaded}
                             />
                           </div>
 
@@ -254,7 +266,10 @@ export function MediaUploadDialog({
                             </div>
                           )}
                           {uploadFile.uploaded && (
-                            <div className="text-sm text-green-600">✓ Uploaded successfully</div>
+                            <div className="flex items-center gap-2 text-sm text-green-600">
+                              <CheckCircle className="h-4 w-4" />
+                              Uploaded successfully
+                            </div>
                           )}
                           {uploadFile.error && (
                             <div className="text-sm text-red-600">✗ {uploadFile.error}</div>
@@ -291,13 +306,15 @@ export function MediaUploadDialog({
               </Button>
               <Button
                 onClick={uploadFiles}
-                disabled={isUploading || files.every(f => f.uploaded)}
+                disabled={isUploading || allUploaded}
               >
                 {isUploading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Uploading...
                   </>
+                ) : allUploaded ? (
+                  "All Files Uploaded"
                 ) : (
                   `Upload ${files.filter(f => !f.uploaded).length} Files`
                 )}
