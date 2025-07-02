@@ -1,14 +1,6 @@
-# Turborepo starter
+# Turborepo with Supabase Authentication
 
-This is a community-maintained example. If you experience a problem, please submit a pull request with a fix. GitHub Issues will be closed.
-
-## Using this example
-
-Run the following command:
-
-```bash
-npx create-turbo@latest -e with-nestjs
-```
+This is a monorepo setup with NestJS API, Next.js web app, and Supabase authentication integrated with Prisma database.
 
 ## What's inside?
 
@@ -18,103 +10,172 @@ This Turborepo includes the following packages/apps:
 
     .
     ├── apps
-    │   ├── api                       # NestJS app (https://nestjs.com).
-    │   └── web                       # Next.js app (https://nextjs.org).
+    │   ├── api                       # NestJS app with Supabase auth
+    │   └── web                       # Next.js app with auth UI
     └── packages
-        ├── @repo/api                 # Shared `NestJS` resources.
-        ├── @repo/eslint-config       # `eslint` configurations (includes `prettier`)
-        ├── @repo/jest-config         # `jest` configurations
-        ├── @repo/typescript-config   # `tsconfig.json`s used throughout the monorepo
-        └── @repo/ui                  # Shareable stub React component library.
+        ├── @repo/auth                # Shared authentication logic
+        ├── @repo/api                 # Shared NestJS resources
+        ├── @repo/database            # Prisma database client
+        ├── @repo/eslint-config       # ESLint configurations
+        ├── @repo/jest-config         # Jest configurations
+        └── @repo/typescript-config   # TypeScript configurations
 
-Each package and application are 100% [TypeScript](https://www.typescriptlang.org/) safe.
+## Getting Started
 
-### Utilities
+### Prerequisites
 
-This `Turborepo` has some additional tools already set for you:
+1. **Supabase Project**: Create a new project at [supabase.com](https://supabase.com)
+2. **PostgreSQL Database**: Set up your database (can use Supabase's built-in database)
 
-- [TypeScript](https://www.typescriptlang.org/) for static type-safety
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-- [Jest](https://prettier.io) & [Playwright](https://playwright.dev/) for testing
+### Environment Setup
 
-### Commands
-
-This `Turborepo` already configured useful commands for all your apps and packages.
-
-#### Build
-
+1. **API Environment Variables** (`apps/api/.env`):
 ```bash
-# Will build all the app & packages with the supported `build` script.
-pnpm run build
-
-# ℹ️ If you plan to only build apps individually,
-# Please make sure you've built the packages first.
+DATABASE_URL="postgresql://username:password@localhost:5432/database_name"
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+JWT_SECRET=your_jwt_secret_key
 ```
 
-#### Develop
-
+2. **Web Environment Variables** (`apps/web/.env.local`):
 ```bash
-# Will run the development server for all the app & packages with the supported `dev` script.
-pnpm run dev
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 
-#### test
+### Installation & Setup
 
+1. **Install dependencies**:
 ```bash
-# Will launch a test suites for all the app & packages with the supported `test` script.
-pnpm run test
-
-# You can launch e2e testes with `test:e2e`
-pnpm run test:e2e
-
-# See `@repo/jest-config` to customize the behavior.
+pnpm install
 ```
 
-#### Lint
-
+2. **Set up the database**:
 ```bash
-# Will lint all the app & packages with the supported `lint` script.
-# See `@repo/eslint-config` to customize the behavior.
-pnpm run lint
+cd packages/database
+pnpm prisma generate
+pnpm prisma db push
 ```
 
-#### Format
+3. **Build packages**:
+```bash
+pnpm build
+```
+
+4. **Start development servers**:
+```bash
+pnpm dev
+```
+
+This will start:
+- API server at `http://localhost:3000`
+- Web app at `http://localhost:3001`
+
+## Authentication Flow
+
+### Architecture
+
+1. **Supabase Auth**: Handles user authentication and session management
+2. **NestJS API**: Validates tokens and manages user data in Prisma
+3. **Next.js Web**: Provides authentication UI and protected routes
+4. **Prisma Database**: Stores user profiles and application data
+
+### Features
+
+- ✅ Email/Password authentication
+- ✅ JWT token validation
+- ✅ User profile management
+- ✅ Protected routes
+- ✅ Automatic user sync between Supabase and Prisma
+- ✅ TypeScript throughout
+
+### API Endpoints
+
+- `POST /auth/signup` - Register new user
+- `POST /auth/signin` - Sign in user
+- `POST /auth/signout` - Sign out user
+- `GET /auth/me` - Get current user profile
+- `GET /auth/verify` - Verify JWT token
+
+### Web Routes
+
+- `/login` - Sign in page
+- `/signup` - Sign up page
+- `/dashboard` - Protected dashboard (requires auth)
+
+## Development
+
+### Adding New Features
+
+1. **Shared Types**: Add to `packages/auth/src/types/`
+2. **API Endpoints**: Add to `apps/api/src/`
+3. **Web Components**: Add to `apps/web/components/`
+4. **Database Changes**: Update `packages/database/prisma/schema.prisma`
+
+### Testing
 
 ```bash
-# Will format all the supported `.ts,.js,json,.tsx,.jsx` files.
-# See `@repo/eslint-config/prettier-base.js` to customize the behavior.
+# Run all tests
+pnpm test
+
+# Run API tests
+cd apps/api && pnpm test
+
+# Run e2e tests
+pnpm test:e2e
+```
+
+### Linting & Formatting
+
+```bash
+# Lint all packages
+pnpm lint
+
+# Format code
 pnpm format
 ```
 
-### Remote Caching
+## Deployment
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+### API Deployment
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+1. Set environment variables on your hosting platform
+2. Run database migrations: `pnpm prisma migrate deploy`
+3. Build and deploy: `pnpm build && pnpm start`
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+### Web Deployment
+
+1. Set environment variables (Vercel, Netlify, etc.)
+2. Build and deploy: `pnpm build`
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Database Connection**: Ensure `DATABASE_URL` is correct
+2. **Supabase Config**: Verify Supabase URL and keys
+3. **CORS Issues**: Check API CORS settings for web app domain
+4. **Token Validation**: Ensure JWT_SECRET matches between services
+
+### Useful Commands
 
 ```bash
-npx turbo login
+# Reset database
+cd packages/database && pnpm prisma migrate reset
+
+# View database
+cd packages/database && pnpm prisma studio
+
+# Generate Prisma client
+cd packages/database && pnpm prisma generate
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## Learn More
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```bash
-npx turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+- [Turborepo Documentation](https://turborepo.com/docs)
+- [Supabase Documentation](https://supabase.com/docs)
+- [NestJS Documentation](https://docs.nestjs.com)
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Prisma Documentation](https://www.prisma.io/docs)
