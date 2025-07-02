@@ -1,21 +1,25 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { SupabaseService, UserService } from '@repo/auth';
-import { SignUpDto } from './dto/sign-up.dto';
-import { SignInDto } from './dto/sign-in.dto';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { EmailService } from '../../email/email.service';
 
 @Injectable()
 export class AuthService {
   private supabaseService: SupabaseService;
   private userService: UserService;
 
-  constructor(private jwtService: JwtService) {
+  constructor(
+    private jwtService: JwtService,
+    private emailService: EmailService,
+  ) {
     this.supabaseService = new SupabaseService();
     this.userService = new UserService();
   }
 
-  async signUp(signUpDto: SignUpDto) {
-    const { user, error } = await this.supabaseService.signUp(signUpDto);
+  async register(registerDto: RegisterDto) {
+    const { user, error } = await this.supabaseService.signUp(registerDto);
 
     if (error) {
       throw new ConflictException(error);
@@ -27,6 +31,9 @@ export class AuthService {
 
     // Store user in Prisma database
     const dbUser = await this.userService.createOrUpdateUser(user);
+
+    // Send welcome email
+    await this.emailService.sendWelcomeEmail(dbUser.email, dbUser.full_name);
 
     // Generate JWT token
     const payload = { sub: dbUser.id, email: dbUser.email };
@@ -45,8 +52,8 @@ export class AuthService {
     };
   }
 
-  async signIn(signInDto: SignInDto) {
-    const { user, error } = await this.supabaseService.signIn(signInDto);
+  async login(loginDto: LoginDto) {
+    const { user, error } = await this.supabaseService.signIn(loginDto);
 
     if (error) {
       throw new UnauthorizedException(error);
@@ -76,14 +83,14 @@ export class AuthService {
     };
   }
 
-  async signOut() {
+  async logout() {
     const { error } = await this.supabaseService.signOut();
     
     if (error) {
       throw new UnauthorizedException(error);
     }
 
-    return { message: 'Successfully signed out' };
+    return { message: 'Successfully logged out' };
   }
 
   async getProfile(userId: string) {
