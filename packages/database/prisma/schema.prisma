@@ -1,0 +1,217 @@
+// Prisma schema file
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+model tbm_user {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  email_verified Boolean  @default(false)
+  username       String?
+  full_name      String?
+  avatar         String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  is_deleted     Boolean  @default(false)
+
+  workspace_id String?
+  workspace    tbm_workspace? @relation("user_active_workspace", fields: [workspace_id], references: [id])
+
+  // Relations
+  created_workspaces  tbm_workspace[]        @relation("workspace_creator")
+  modified_workspaces tbm_workspace[]        @relation("workspace_modifier")
+  workspace_members   tbs_workspace_member[]
+
+  created_media  tbm_media[] @relation("media_creator")
+  modified_media tbm_media[] @relation("media_modifier")
+
+  created_content_entries  tbm_content_entry[]     @relation("entry_creator")
+  modified_content_entries tbm_content_entry[]     @relation("entry_modifier")
+  content_entry_logs       tbs_content_entry_log[]
+
+  created_workspace_members  tbs_workspace_member[] @relation("workspace_member_creator")
+  modified_workspace_members tbs_workspace_member[] @relation("workspace_member_modifier")
+
+  created_contents  tbm_content[] @relation("object_type_creator")
+  modified_contents tbm_content[] @relation("object_type_modifier")
+
+  created_content_fields  tbm_content_field[] @relation("field_definition_creator")
+  modified_content_fields tbm_content_field[] @relation("field_definition_modifier")
+
+  @@index([created_at])
+}
+
+model tbm_workspace {
+  id         String   @id @default(uuid())
+  name       String
+  slug       String   @unique
+  status     String   @default("Active")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  is_deleted Boolean  @default(false)
+
+  stripe_customer_id     String?
+  stripe_subscription_id String?
+  subscription_status    String? @default("free")
+  plan_type              String? @default("free")
+
+  creator_id String
+  creator    tbm_user @relation("workspace_creator", fields: [creator_id], references: [id])
+
+  modifier_id String?
+  modifier    tbm_user? @relation("workspace_modifier", fields: [modifier_id], references: [id])
+
+  // Relations
+  members      tbs_workspace_member[]
+  media_assets tbm_media[]
+  contents     tbm_content[]
+  active_users tbm_user[]             @relation("user_active_workspace")
+
+  @@index([status])
+  @@index([stripe_customer_id])
+}
+
+model tbs_workspace_member {
+  id         String   @id @default(uuid())
+  role       String   @default("Member")
+  status     String   @default("Active")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  is_deleted Boolean  @default(false)
+
+  workspace_id String
+  workspace    tbm_workspace @relation(fields: [workspace_id], references: [id])
+
+  user_id String
+  user    tbm_user @relation(fields: [user_id], references: [id])
+
+  creator_id String?
+  creator    tbm_user? @relation("workspace_member_creator", fields: [creator_id], references: [id])
+
+  modifier_id String?
+  modifier    tbm_user? @relation("workspace_member_modifier", fields: [modifier_id], references: [id])
+
+  @@unique([workspace_id, user_id])
+  @@index([workspace_id, user_id])
+}
+
+model tbm_media {
+  id          String  @id @default(uuid())
+  name        String
+  media_type  String  @default("IMAGE")
+  file_size   Int?
+  file_path   String
+  width       Int?
+  height      Int?
+  alt_text    String?
+  description String?
+
+  creator_id String
+  creator    tbm_user @relation("media_creator", fields: [creator_id], references: [id])
+
+  modifier_id String?
+  modifier    tbm_user? @relation("media_modifier", fields: [modifier_id], references: [id])
+
+  workspace_id String
+  workspace    tbm_workspace @relation(fields: [workspace_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  is_deleted Boolean  @default(false)
+
+  @@index([workspace_id])
+}
+
+model tbm_content {
+  id   String @id @default(uuid())
+  name String
+  slug String
+
+  workspace_id String
+  workspace    tbm_workspace @relation(fields: [workspace_id], references: [id])
+
+  entries           tbm_content_entry[]
+  field_definitions tbm_content_field[] @relation("object_type_fields")
+  relation_fields   tbm_content_field[] @relation("field_relation")
+
+  creator_id String?
+  creator    tbm_user? @relation("object_type_creator", fields: [creator_id], references: [id])
+
+  modifier_id String?
+  modifier    tbm_user? @relation("object_type_modifier", fields: [modifier_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  is_deleted Boolean  @default(false)
+
+  @@index([slug])
+  @@index([workspace_id])
+}
+
+model tbm_content_field {
+  id            String  @id @default(uuid())
+  name          String
+  display_name  String
+  type          String  @default("TEXT")
+  required      Boolean @default(false)
+  multiple      Boolean @default(false)
+  placeholder   String?
+  default_value Json?
+
+  object_type_id String
+  object_type    tbm_content @relation("object_type_fields", fields: [object_type_id], references: [id])
+
+  relation_to_id String?
+  relation_to    tbm_content? @relation("field_relation", fields: [relation_to_id], references: [id])
+
+  creator_id String?
+  creator    tbm_user? @relation("field_definition_creator", fields: [creator_id], references: [id])
+
+  modifier_id String?
+  modifier    tbm_user? @relation("field_definition_modifier", fields: [modifier_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  is_deleted Boolean  @default(false)
+}
+
+model tbm_content_entry {
+  id             String      @id @default(uuid())
+  object_type_id String
+  object_type    tbm_content @relation(fields: [object_type_id], references: [id])
+  data           Json
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+  is_deleted     Boolean     @default(false)
+
+  creator_id String?
+  creator    tbm_user? @relation("entry_creator", fields: [creator_id], references: [id])
+
+  modifier_id String?
+  modifier    tbm_user? @relation("entry_modifier", fields: [modifier_id], references: [id])
+
+  entry_logs tbs_content_entry_log[]
+
+  @@index([object_type_id])
+  @@index([created_at])
+}
+
+model tbs_content_entry_log {
+  id         String            @id @default(uuid())
+  entry_id   String
+  entry      tbm_content_entry @relation(fields: [entry_id], references: [id])
+  user_id    String
+  user       tbm_user          @relation(fields: [user_id], references: [id])
+  ip_address String?
+  fetched_at DateTime          @default(now())
+
+  @@index([user_id])
+  @@index([fetched_at])
+}
